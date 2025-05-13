@@ -1,69 +1,89 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const db = require('./db');
+const db = require("./db");
 
 // Get all products
-router.get('/', (req, res) => {
-  const query = 'SELECT * FROM products';
+router.get("/", (req, res) => {
+  const query = "SELECT * FROM products";
   db.all(query, [], (err, rows) => {
     if (err) {
       console.error(err.message);
-      return res.status(500).json({ message: 'Database error' });
+      return res.status(500).json({ message: "Database error" });
     }
     res.json(rows);
   });
 });
 
+// Get single product by id
+router.get("/:pid", (req, res) => {
+  const pid = req.params.pid;
+  const query = "SELECT * FROM products WHERE pid = ?";
+  db.get(query, [pid], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ message: "Database error" });
+    }
+    if (!row) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(row);
+  });
+});
+
 // Add new product
-router.post('/', (req, res) => {
+router.post("/", (req, res) => {
   const { pname, description, quantity, price } = req.body;
-  const query = 'INSERT INTO products (pname, description, quantity, price) VALUES (?, ?, ?, ?)';
+  const query =
+    "INSERT INTO products (pname, description, quantity, price) VALUES (?, ?, ?, ?)";
   db.run(query, [pname, description, quantity, price], function (err) {
     if (err) {
       console.error(err.message);
-      return res.status(500).json({ message: 'Error inserting product' });
+      return res.status(500).json({ message: "Error inserting product" });
     }
-    res.json({ message: 'Product added', pid: this.lastID });
+    res.json({ message: "Product added", pid: this.lastID });
   });
 });
 
 // Delete product by id
-router.delete('/:pid', (req, res) => {
+router.delete("/:pid", (req, res) => {
   const pid = req.params.pid;
-  const query = 'DELETE FROM products WHERE pid = ?';
+  const query = "DELETE FROM products WHERE pid = ?";
   db.run(query, [pid], function (err) {
     if (err) {
       console.error(err.message);
-      return res.status(500).json({ message: 'Error deleting product' });
+      return res.status(500).json({ message: "Error deleting product" });
     }
-    res.json({ message: 'Product deleted' });
+    res.json({ message: "Product deleted" });
   });
 });
 
 // PUT: Update entire product by id
-router.put('/:pid', (req, res) => {
+router.put("/:pid", (req, res) => {
   const pid = req.params.pid;
   const { pname, description, quantity, price } = req.body;
-  const query = 'UPDATE products SET pname = ?, description = ?, quantity = ?, price = ? WHERE pid = ?';
+  const query =
+    "UPDATE products SET pname = ?, description = ?, quantity = ?, price = ? WHERE pid = ?";
   db.run(query, [pname, description, quantity, price, pid], function (err) {
     if (err) {
       console.error(err.message);
-      return res.status(500).json({ message: 'Error updating product' });
+      return res.status(500).json({ message: "Error updating product" });
     }
-    res.json({ message: 'Product fully updated' });
+    res.json({ message: "Product fully updated" });
   });
 });
 
 // PATCH: Update part of the product
-router.patch('/:pid', (req, res) => {
+router.patch("/:pid", (req, res) => {
   const pid = req.params.pid;
   const fields = req.body;
 
   if (!fields || Object.keys(fields).length === 0) {
-    return res.status(400).json({ message: 'No fields provided for update' });
+    return res.status(400).json({ message: "No fields provided for update" });
   }
 
-  const updates = Object.keys(fields).map(key => `${key} = ?`).join(', ');
+  const updates = Object.keys(fields)
+    .map((key) => `${key} = ?`)
+    .join(", ");
   const values = Object.values(fields);
   values.push(pid);
 
@@ -72,9 +92,9 @@ router.patch('/:pid', (req, res) => {
   db.run(query, values, function (err) {
     if (err) {
       console.error(err.message);
-      return res.status(500).json({ message: 'Error updating product' });
+      return res.status(500).json({ message: "Error updating product" });
     }
-    res.json({ message: 'Product partially updated' });
+    res.json({ message: "Product partially updated" });
   });
 });
 
